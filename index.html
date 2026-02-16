@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seguridad ULima - Clasificador</title>
+    <title>Seguridad ULima</title>
     <style>
         :root { 
             --naranja: #FF8C00; 
             --negro: #1a1a1a; 
-            --blanco: #FFFFFF;
-            --fondo-gris: #f0f2f5;
-            --verde-ok: #2ecc71;
-            --rojo-error: #e74c3c;
+            --fondo-gris: #e9ecef;
+            --verde: #28a745;
+            --rojo: #dc3545;
         }
         
         body { 
@@ -20,89 +19,78 @@
             display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
-        header { 
-            background-color: var(--negro); color: var(--blanco); 
-            padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 { margin: 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+        header { background-color: var(--negro); color: white; padding: 10px; text-align: center; }
+        h1 { margin: 0; font-size: 1.1rem; text-transform: uppercase; }
 
         #stats { 
             display: flex; justify-content: space-around; 
-            background: #2c3e50; color: white; padding: 10px; font-size: 1rem;
+            background: #2c3e50; color: white; padding: 8px; font-size: 0.9rem;
         }
 
-        /* Contenedor Principal Armonioso */
-        #game-container {
+        /* Contenedor compacto que sube el contenido */
+        #game-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* Sube todo el contenido */
             align-items: center;
-            padding: 20px;
-            gap: 20px; /* Espacio entre imagen y botones */
+            padding: 15px; /* Espaciado lateral */
+            padding-top: 10px; /* Reduce el espacio con los stats */
         }
 
         #image-card {
             width: 100%;
-            max-width: 450px;
-            flex: 0 1 60%; /* Toma el 60% del espacio disponible */
+            max-width: 400px;
+            height: 60vh; /* Altura controlada para que no empuje los botones al fondo */
             background: white;
-            border: 2px solid #ddd;
-            border-radius: 20px;
+            border: 3px solid #333;
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.2s, border-color 0.2s;
+            margin-bottom: 15px; /* Espacio corto con los botones */
         }
 
         #image-card img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Llena el cuadro para que se vea más impactante */
+            object-fit: contain; /* Imagen completa y clara */
+            background-color: #fff;
         }
 
-        /* Panel de Botones Integrado */
+        /* Panel de botones pegado a la imagen */
         #button-panel {
             width: 100%;
-            max-width: 450px;
+            max-width: 400px;
             display: flex;
-            gap: 15px;
-            padding-bottom: 20px;
+            gap: 12px;
         }
 
         .action-btn {
             flex: 1;
-            height: 70px; /* Altura cómoda para el pulgar */
+            height: 60px;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            transition: transform 0.1s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        .btn-safe { background-color: var(--verde-ok); }
-        .btn-unsafe { background-color: var(--rojo-error); }
-        .action-btn:active { transform: scale(0.95); }
+        .btn-safe { background-color: var(--verde); }
+        .btn-unsafe { background-color: var(--rojo); }
 
-        /* Modal Estilizado */
+        /* Modal */
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center;
         }
-        .modal-box { background: white; padding: 30px; border-radius: 20px; width: 80%; max-width: 350px; text-align: center; }
-        .btn-restart { 
-            background: var(--negro); color: var(--blanco); border: none; 
-            padding: 12px 25px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 15px;
-        }
-
-        /* Feedback visual */
-        .correct-hit { border: 4px solid var(--verde-ok) !important; transform: scale(1.02); }
-        .wrong-hit { border: 4px solid var(--rojo-error) !important; transform: scale(0.98); }
+        .modal-box { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 80%; }
+        
+        .correct { border-color: var(--verde) !important; transform: scale(1.02); }
+        .incorrect { border-color: var(--rojo) !important; transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -114,7 +102,7 @@
     <span>PUNTOS: <span id="score">0</span></span>
 </div>
 
-<div id="game-container">
+<div id="game-wrapper">
     <div id="image-card">
         <img id="item-img" src="" alt="Cargando...">
     </div>
@@ -127,9 +115,9 @@
 
 <div id="modal">
     <div class="modal-box">
-        <h2 id="final-title">¡Tiempo agotado!</h2>
-        <p id="final-msg" style="font-size: 1.2rem; margin: 15px 0;"></p>
-        <button class="btn-restart" onclick="location.reload()">Jugar de nuevo</button>
+        <h2>¡Fin del juego!</h2>
+        <p id="final-msg"></p>
+        <button onclick="location.reload()" style="padding: 10px 20px; background: black; color: white; border-radius: 5px;">Reiniciar</button>
     </div>
 </div>
 
@@ -144,25 +132,19 @@
         { img: "imagenes/estacionamiento_seguro.png", type: "safe" },
         { img: "imagenes/estacionamiento_inseguro.png", type: "unsafe" },
         { img: "imagenes/caminando_campus.png", type: "safe" },
-        { img: "imagenes/caminando_campus_inseguro.png", type: "unsafe" }
+        { img: "imagenes/caminando_campus_inseguro.png", type: "unsafe" },
+        { img: "imagenes/pintado_de_backing_seguro.png", type: "safe" },
+        { img: "imagenes/pintado_de_backing_inseguro.png", type: "unsafe" }
     ];
 
     let score = 0;
     let timeLeft = 30;
     let currentIdx = 0;
     let gameActive = true;
-    let deck = [];
+    let deck = items.sort(() => 0.5 - Math.random());
 
     const imgElement = document.getElementById("item-img");
     const card = document.getElementById("image-card");
-    const scoreElement = document.getElementById("score");
-    const timerElement = document.getElementById("timer");
-
-    function init() {
-        deck = items.sort(() => 0.5 - Math.random());
-        showItem();
-        startTimer();
-    }
 
     function showItem() {
         if (currentIdx >= deck.length) {
@@ -174,37 +156,28 @@
 
     function processChoice(choice) {
         if (!gameActive) return;
-
         const isCorrect = deck[currentIdx].type === choice;
-        card.classList.add(isCorrect ? "correct-hit" : "wrong-hit");
-
-        if (isCorrect) {
-            score++;
-            scoreElement.textContent = score;
-        }
-
+        card.classList.add(isCorrect ? "correct" : "incorrect");
+        if (isCorrect) { score++; document.getElementById("score").textContent = score; }
         setTimeout(() => {
-            card.classList.remove("correct-hit", "wrong-hit");
+            card.classList.remove("correct", "incorrect");
             currentIdx++;
             showItem();
         }, 250);
     }
 
-    function startTimer() {
-        const interval = setInterval(() => {
-            if (!gameActive) { clearInterval(interval); return; }
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(interval);
-                gameActive = false;
-                document.getElementById("final-msg").textContent = `Has clasificado ${score} situaciones correctamente.`;
-                document.getElementById("modal").style.display = "flex";
-            }
-        }, 1000);
-    }
+    const timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            gameActive = false;
+            document.getElementById("final-msg").textContent = `Puntaje: ${score}`;
+            document.getElementById("modal").style.display = "flex";
+        }
+    }, 1000);
 
-    init();
+    showItem();
 </script>
 </body>
 </html>
