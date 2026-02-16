@@ -7,102 +7,102 @@
     <style>
         :root { 
             --naranja: #FF8C00; 
-            --negro: #000000; 
+            --negro: #1a1a1a; 
             --blanco: #FFFFFF;
-            --verde-ok: #28a745;
-            --rojo-error: #dc3545;
+            --fondo-gris: #f0f2f5;
+            --verde-ok: #2ecc71;
+            --rojo-error: #e74c3c;
         }
         
         body { 
-            margin: 0; font-family: 'Segoe UI', Roboto, Arial, sans-serif; 
-            background-color: #f8f9fa; text-align: center; 
+            margin: 0; font-family: 'Segoe UI', sans-serif; 
+            background-color: var(--fondo-gris); 
             display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
-        header { background-color: var(--negro); color: var(--blanco); padding: 15px; z-index: 10; shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        h1 { margin: 0; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px; }
+        header { 
+            background-color: var(--negro); color: var(--blanco); 
+            padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { margin: 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
 
         #stats { 
             display: flex; justify-content: space-around; 
-            background: #333; color: white; padding: 12px; font-weight: bold; font-size: 1.1rem;
+            background: #2c3e50; color: white; padding: 10px; font-size: 1rem;
         }
 
-        /* Contenedor de la Imagen - Ahora mucho más grande */
-        #main-display {
+        /* Contenedor Principal Armonioso */
+        #game-container {
             flex: 1;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 15px;
-            background-color: #fff;
+            padding: 20px;
+            gap: 20px; /* Espacio entre imagen y botones */
         }
 
         #image-card {
             width: 100%;
-            max-width: 500px;
-            height: 80%;
-            max-height: 450px;
-            border: 4px solid var(--negro);
+            max-width: 450px;
+            flex: 0 1 60%; /* Toma el 60% del espacio disponible */
+            background: white;
+            border: 2px solid #ddd;
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: transform 0.2s, border-color 0.2s;
         }
 
         #image-card img {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Para que la imagen se vea completa sin cortarse */
-            background-color: #eee;
+            object-fit: cover; /* Llena el cuadro para que se vea más impactante */
         }
 
-        /* Panel de Botones */
+        /* Panel de Botones Integrado */
         #button-panel {
+            width: 100%;
+            max-width: 450px;
             display: flex;
-            height: 120px;
-            gap: 10px;
-            padding: 15px;
-            background: #eee;
+            gap: 15px;
+            padding-bottom: 20px;
         }
 
         .action-btn {
             flex: 1;
+            height: 70px; /* Altura cómoda para el pulgar */
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            transition: transform 0.1s;
         }
 
         .btn-safe { background-color: var(--verde-ok); }
         .btn-unsafe { background-color: var(--rojo-error); }
+        .action-btn:active { transform: scale(0.95); }
 
-        .action-btn:active { transform: scale(0.95); opacity: 0.8; }
-
-        /* Modal Personalizado */
+        /* Modal Estilizado */
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 100; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center;
         }
-        .modal-box { background: white; padding: 35px; border-radius: 20px; width: 85%; max-width: 400px; }
-        .modal-box h2 { font-size: 2rem; margin-top: 0; }
+        .modal-box { background: white; padding: 30px; border-radius: 20px; width: 80%; max-width: 350px; text-align: center; }
         .btn-restart { 
             background: var(--negro); color: var(--blanco); border: none; 
-            padding: 15px 30px; border-radius: 10px; font-size: 1.2rem; cursor: pointer; margin-top: 20px;
+            padding: 12px 25px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 15px;
         }
 
-        /* Feedback visual rápido */
-        .flash-correct { border: 8px solid var(--verde-ok) !important; }
-        .flash-incorrect { border: 8px solid var(--rojo-error) !important; }
-
+        /* Feedback visual */
+        .correct-hit { border: 4px solid var(--verde-ok) !important; transform: scale(1.02); }
+        .wrong-hit { border: 4px solid var(--rojo-error) !important; transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -114,27 +114,26 @@
     <span>PUNTOS: <span id="score">0</span></span>
 </div>
 
-<div id="main-display">
+<div id="game-container">
     <div id="image-card">
-        <img id="item-img" src="" alt="Cargando imagen...">
+        <img id="item-img" src="" alt="Cargando...">
     </div>
-</div>
 
-<div id="button-panel">
-    <button class="action-btn btn-unsafe" onclick="processChoice('unsafe')">INSEGURO</button>
-    <button class="action-btn btn-safe" onclick="processChoice('safe')">SEGURO</button>
+    <div id="button-panel">
+        <button class="action-btn btn-unsafe" onclick="processChoice('unsafe')">INSEGURO</button>
+        <button class="action-btn btn-safe" onclick="processChoice('safe')">SEGURO</button>
+    </div>
 </div>
 
 <div id="modal">
     <div class="modal-box">
-        <h2 id="final-title">¡Fin del juego!</h2>
-        <p id="final-msg" style="font-size: 1.3rem;"></p>
-        <button class="btn-restart" onclick="location.reload()">Reintentar</button>
+        <h2 id="final-title">¡Tiempo agotado!</h2>
+        <p id="final-msg" style="font-size: 1.2rem; margin: 15px 0;"></p>
+        <button class="btn-restart" onclick="location.reload()">Jugar de nuevo</button>
     </div>
 </div>
 
 <script>
-    // Lista de imágenes basada en tu repositorio
     const items = [
         { img: "imagenes/Usando_EPP.png", type: "safe" },
         { img: "imagenes/sin_EPP.png", type: "unsafe" },
@@ -144,8 +143,6 @@
         { img: "imagenes/vias_con_mochilas.png", type: "unsafe" },
         { img: "imagenes/estacionamiento_seguro.png", type: "safe" },
         { img: "imagenes/estacionamiento_inseguro.png", type: "unsafe" },
-        { img: "imagenes/escalera_seguro.png", type: "safe" },
-        { img: "imagenes/escalera_inseguro.png", type: "unsafe" },
         { img: "imagenes/caminando_campus.png", type: "safe" },
         { img: "imagenes/caminando_campus_inseguro.png", type: "unsafe" }
     ];
@@ -157,10 +154,9 @@
     let deck = [];
 
     const imgElement = document.getElementById("item-img");
-    const cardContainer = document.getElementById("image-card");
+    const card = document.getElementById("image-card");
     const scoreElement = document.getElementById("score");
     const timerElement = document.getElementById("timer");
-    const modal = document.getElementById("modal");
 
     function init() {
         deck = items.sort(() => 0.5 - Math.random());
@@ -180,9 +176,7 @@
         if (!gameActive) return;
 
         const isCorrect = deck[currentIdx].type === choice;
-        
-        // Feedback visual en el borde de la imagen
-        cardContainer.classList.add(isCorrect ? "flash-correct" : "flash-incorrect");
+        card.classList.add(isCorrect ? "correct-hit" : "wrong-hit");
 
         if (isCorrect) {
             score++;
@@ -190,35 +184,27 @@
         }
 
         setTimeout(() => {
-            cardContainer.classList.remove("flash-correct", "flash-incorrect");
+            card.classList.remove("correct-hit", "wrong-hit");
             currentIdx++;
             showItem();
-        }, 300);
+        }, 250);
     }
 
     function startTimer() {
         const interval = setInterval(() => {
-            if (!gameActive) {
-                clearInterval(interval);
-                return;
-            }
+            if (!gameActive) { clearInterval(interval); return; }
             timeLeft--;
             timerElement.textContent = timeLeft;
             if (timeLeft <= 0) {
                 clearInterval(interval);
-                endGame();
+                gameActive = false;
+                document.getElementById("final-msg").textContent = `Has clasificado ${score} situaciones correctamente.`;
+                document.getElementById("modal").style.display = "flex";
             }
         }, 1000);
-    }
-
-    function endGame() {
-        gameActive = false;
-        document.getElementById("final-msg").textContent = `Lograste clasificar ${score} situaciones correctamente. ¡Excelente trabajo por la seguridad!`;
-        modal.style.display = "flex";
     }
 
     init();
 </script>
 </body>
 </html>
-
