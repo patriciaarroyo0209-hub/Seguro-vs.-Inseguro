@@ -2,79 +2,114 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clasificador de Seguridad - ULima</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seguridad ULima - Clasificador</title>
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; background-color: #f2f2f2; text-align: center; overflow: hidden; }
-        h1 { background-color: black; color: white; padding: 10px; margin: 0; font-size: 24px; }
-        #stats { display: flex; justify-content: space-around; padding: 10px; background: #eee; font-weight: bold; font-size: 1.2rem; }
+        :root { --naranja: #FF8C00; --negro: #000000; --blanco: #FFFFFF; }
         
-        #game-container { display: flex; height: 70vh; position: relative; }
-        .zone { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.3s; }
-        #safe-zone { background-color: #d4edda; border-right: 5px white solid; }
-        #unsafe-zone { background-color: #f8d7da; border-left: 5px white solid; }
-        .zone h2 { color: #333; pointer-events: none; }
+        body { 
+            margin: 0; font-family: 'Segoe UI', Arial, sans-serif; 
+            background-color: #f0f0f0; text-align: center; 
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
 
-        #item-container {
-            position: absolute;
-            top: 50%; left: 50%;
+        header { background-color: var(--negro); color: var(--blanco); padding: 10px; }
+        h1 { margin: 0; font-size: 1.2rem; }
+
+        #stats { 
+            display: flex; justify-content: space-around; 
+            background: #333; color: white; padding: 8px; font-weight: bold; 
+        }
+
+        /* Contenedor principal adaptable */
+        #game-area { 
+            display: flex; flex: 1; position: relative; 
+            flex-direction: row; /* Por defecto para PC */
+        }
+
+        .zone { 
+            flex: 1; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            transition: background 0.2s; z-index: 1;
+        }
+        
+        #safe-zone { background-color: #d4edda; border-right: 2px solid white; }
+        #unsafe-zone { background-color: #f8d7da; border-left: 2px solid white; }
+
+        .zone h2 { margin: 0; font-size: 1.5rem; pointer-events: none; }
+        .zone p { pointer-events: none; opacity: 0.7; }
+
+        /* La carta central */
+        #card-container {
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 250px; height: 250px;
-            background: white;
-            border: 3px solid black;
-            border-radius: 15px;
+            width: 200px; height: 200px;
+            background: white; border: 4px solid var(--negro);
+            border-radius: 15px; z-index: 10;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             display: flex; justify-content: center; align-items: center;
-            z-index: 10; cursor: grab;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            cursor: grab; touch-action: none;
         }
-        #item-container img { width: 90%; height: 90%; object-fit: cover; border-radius: 10px; pointer-events: none; }
 
-        /* Estilos del Modal */
-        #modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center;
+        #card-container img { width: 95%; height: 95%; object-fit: cover; border-radius: 10px; pointer-events: none; }
+
+        /* Ajustes para Celulares */
+        @media (max-width: 600px) {
+            #game-area { flex-direction: column; } /* Zonas arriba y abajo */
+            #safe-zone { border-right: none; border-bottom: 2px solid white; }
+            #unsafe-zone { border-left: none; border-top: 2px solid white; }
+            #card-container { width: 160px; height: 160px; }
         }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 85%; }
-        button { background-color: black; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
-        
-        .correct { background-color: #28a745 !important; }
-        .incorrect { background-color: #dc3545 !important; }
+
+        /* Modal Personalizado */
+        #modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100; justify-content: center; align-items: center;
+        }
+        .modal-box { background: white; padding: 30px; border-radius: 15px; width: 80%; max-width: 350px; }
+        .btn-restart { 
+            background: var(--negro); color: var(--blanco); border: none; 
+            padding: 12px 25px; border-radius: 5px; font-size: 1rem; cursor: pointer;
+        }
+
+        .flash-correct { background-color: #28a745 !important; }
+        .flash-incorrect { background-color: #dc3545 !important; }
     </style>
 </head>
 <body>
 
-<h1>Clasificador de Seguridad</h1>
+<header><h1>Seguridad ULima</h1></header>
 <div id="stats">
-    <div>Tiempo: <span id="timer">30</span>s</div>
-    <div>Puntos: <span id="score">0</span></div>
+    <span>Tiempo: <span id="timer">30</span>s</span>
+    <span>Puntos: <span id="score">0</span></span>
 </div>
 
-<div id="game-container">
-    <div id="safe-zone" class="zone" ondragover="allowDrop(event)" ondrop="drop(event, 'safe')">
+<div id="game-area">
+    <div id="safe-zone" class="zone">
         <h2>SEGURO</h2>
-        <p>Arrastra aquí</p>
-    </div>
-    
-    <div id="item-container" draggable="true" ondragstart="drag(event)">
-        <img id="current-img" src="" alt="Cargando...">
+        <p>(Toca o arrastra)</p>
     </div>
 
-    <div id="unsafe-zone" class="zone" ondragover="allowDrop(event)" ondrop="drop(event, 'unsafe')">
+    <div id="card-container" draggable="true">
+        <img id="item-img" src="" alt="Cargando...">
+    </div>
+
+    <div id="unsafe-zone" class="zone">
         <h2>INSEGURO</h2>
-        <p>Arrastra aquí</p>
+        <p>(Toca o arrastra)</p>
     </div>
 </div>
 
-<div id="modal-overlay">
-    <div class="modal-content">
-        <h2 id="modal-title">¡Tiempo agotado!</h2>
-        <p id="modal-msg">Puntaje final: 0</p>
-        <button onclick="location.reload()">Jugar de nuevo</button>
+<div id="modal">
+    <div class="modal-box">
+        <h2 id="final-title">¡Fin del tiempo!</h2>
+        <p id="final-msg"></p>
+        <button class="btn-restart" onclick="location.reload()">Jugar de nuevo</button>
     </div>
 </div>
 
 <script>
-    // Lista de imágenes basada en tu carpeta 'imagenes'
+    // Lista de imágenes
     const items = [
         { img: "imagenes/Usando_EPP.png", type: "safe" },
         { img: "imagenes/sin_EPP.png", type: "unsafe" },
@@ -85,77 +120,88 @@
         { img: "imagenes/estacionamiento_seguro.png", type: "safe" },
         { img: "imagenes/estacionamiento_inseguro.png", type: "unsafe" },
         { img: "imagenes/bebida_seguro.png", type: "safe" },
-        { img: "imagenes/bebida_inseguro.png", type: "unsafe" }
+        { img: "imagenes/bebida_inseguro.png", type: "unsafe" },
+        { img: "imagenes/caminando_campus.png", type: "safe" },
+        { img: "imagenes/caminando_campus_inseguro.png", type: "unsafe" }
     ];
 
-    let currentItemIndex = 0;
     let score = 0;
     let timeLeft = 30;
+    let currentIdx = 0;
     let gameActive = true;
+    let deck = [];
 
-    const timerElement = document.getElementById("timer");
+    const imgElement = document.getElementById("item-img");
     const scoreElement = document.getElementById("score");
-    const currentImg = document.getElementById("current-img");
-    const modal = document.getElementById("modal-overlay");
+    const timerElement = document.getElementById("timer");
 
-    function shuffle(array) { return array.sort(() => 0.5 - Math.random()); }
-    let shuffledItems = shuffle([...items]);
-
-    function loadNextItem() {
-        if (currentItemIndex >= shuffledItems.length) {
-            shuffledItems = shuffle([...items]);
-            currentItemIndex = 0;
-        }
-        currentImg.src = shuffledItems[currentItemIndex].img;
+    function init() {
+        deck = items.sort(() => 0.5 - Math.random());
+        showItem();
+        startTimer();
     }
 
-    // Lógica de Arrastrar y Soltar
-    function allowDrop(event) { event.preventDefault(); }
-    function drag(event) { if(!gameActive) return; }
+    function showItem() {
+        if (currentIdx >= deck.length) currentIdx = 0; // Reiniciar ciclo si se acaban
+        imgElement.src = deck[currentIdx].img;
+    }
 
-    function drop(event, zone) {
-        event.preventDefault();
+    function processChoice(choice) {
         if (!gameActive) return;
 
-        const correctType = shuffledItems[currentItemIndex].type;
-        const zoneElement = zone === 'safe' ? document.getElementById("safe-zone") : document.getElementById("unsafe-zone");
+        const isCorrect = deck[currentIdx].type === choice;
+        const zoneId = choice === 'safe' ? 'safe-zone' : 'unsafe-zone';
+        const zone = document.getElementById(zoneId);
 
-        if (zone === correctType) {
+        if (isCorrect) {
             score++;
             scoreElement.textContent = score;
-            zoneElement.classList.add("correct");
+            zone.classList.add("flash-correct");
         } else {
-            zoneElement.classList.add("incorrect");
+            zone.classList.add("flash-incorrect");
         }
 
         setTimeout(() => {
-            zoneElement.classList.remove("correct", "incorrect");
-            currentItemIndex++;
-            loadNextItem();
-        }, 300);
+            zone.classList.remove("flash-correct", "flash-incorrect");
+            currentIdx++;
+            showItem();
+        }, 250);
     }
 
-    // Cronómetro
-    const countdown = setInterval(() => {
-        timeLeft--;
-        timerElement.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            endGame();
-        }
-    }, 1000);
+    // Soporte para Celular (Clic en zona)
+    document.getElementById("safe-zone").addEventListener("click", () => processChoice('safe'));
+    document.getElementById("unsafe-zone").addEventListener("click", () => processChoice('unsafe'));
+
+    // Soporte para PC (Drag & Drop)
+    const card = document.getElementById("card-container");
+    card.ondragstart = (e) => e.dataTransfer.setData("text", "dragging");
+    
+    document.querySelectorAll('.zone').forEach(zone => {
+        zone.ondragover = (e) => e.preventDefault();
+        zone.ondrop = (e) => {
+            const side = zone.id === 'safe-zone' ? 'safe' : 'unsafe';
+            processChoice(side);
+        };
+    });
+
+    function startTimer() {
+        const interval = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                endGame();
+            }
+        }, 1000);
+    }
 
     function endGame() {
         gameActive = false;
-        document.getElementById("modal-msg").textContent = "Lograste clasificar " + score + " situaciones correctamente.";
-        modal.style.display = "flex";
+        document.getElementById("final-msg").textContent = `Clasificaste ${score} situaciones correctamente. ¡Excelente cultura de seguridad!`;
+        document.getElementById("modal").style.display = "flex";
     }
 
-    // Soporte para Clic (mejor para celulares que el Drag & Drop)
-    document.getElementById("safe-zone").onclick = () => drop(event, 'safe');
-    document.getElementById("unsafe-zone").onclick = () => drop(event, 'unsafe');
-
-    loadNextItem();
+    init();
 </script>
 </body>
 </html>
