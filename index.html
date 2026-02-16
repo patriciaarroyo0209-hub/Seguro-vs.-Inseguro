@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador de Seguridad - ULima</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background-color: #f2f2f2; text-align: center; overflow: hidden; }
+        h1 { background-color: black; color: white; padding: 10px; margin: 0; font-size: 24px; }
+        #stats { display: flex; justify-content: space-around; padding: 10px; background: #eee; font-weight: bold; font-size: 1.2rem; }
+        
+        #game-container { display: flex; height: 70vh; position: relative; }
+        .zone { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.3s; }
+        #safe-zone { background-color: #d4edda; border-right: 5px white solid; }
+        #unsafe-zone { background-color: #f8d7da; border-left: 5px white solid; }
+        .zone h2 { color: #333; pointer-events: none; }
+
+        #item-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px; height: 250px;
+            background: white;
+            border: 3px solid black;
+            border-radius: 15px;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10; cursor: grab;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        #item-container img { width: 90%; height: 90%; object-fit: cover; border-radius: 10px; pointer-events: none; }
+
+        /* Estilos del Modal */
+        #modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center;
+        }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 85%; }
+        button { background-color: black; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+        
+        .correct { background-color: #28a745 !important; }
+        .incorrect { background-color: #dc3545 !important; }
+    </style>
+</head>
+<body>
+
+<h1>Clasificador de Seguridad</h1>
+<div id="stats">
+    <div>Tiempo: <span id="timer">30</span>s</div>
+    <div>Puntos: <span id="score">0</span></div>
+</div>
+
+<div id="game-container">
+    <div id="safe-zone" class="zone" ondragover="allowDrop(event)" ondrop="drop(event, 'safe')">
+        <h2>SEGURO</h2>
+        <p>Arrastra aquí</p>
+    </div>
+    
+    <div id="item-container" draggable="true" ondragstart="drag(event)">
+        <img id="current-img" src="" alt="Cargando...">
+    </div>
+
+    <div id="unsafe-zone" class="zone" ondragover="allowDrop(event)" ondrop="drop(event, 'unsafe')">
+        <h2>INSEGURO</h2>
+        <p>Arrastra aquí</p>
+    </div>
+</div>
+
+<div id="modal-overlay">
+    <div class="modal-content">
+        <h2 id="modal-title">¡Tiempo agotado!</h2>
+        <p id="modal-msg">Puntaje final: 0</p>
+        <button onclick="location.reload()">Jugar de nuevo</button>
+    </div>
+</div>
+
+<script>
+    // Lista de imágenes basada en tu carpeta 'imagenes'
+    const items = [
+        { img: "imagenes/Usando_EPP.png", type: "safe" },
+        { img: "imagenes/sin_EPP.png", type: "unsafe" },
+        { img: "imagenes/ascensor_seguro.png", type: "safe" },
+        { img: "imagenes/ascensor_inseguro.png", type: "unsafe" },
+        { img: "imagenes/vias_despejadas.png", type: "safe" },
+        { img: "imagenes/vias_con_mochilas.png", type: "unsafe" },
+        { img: "imagenes/estacionamiento_seguro.png", type: "safe" },
+        { img: "imagenes/estacionamiento_inseguro.png", type: "unsafe" },
+        { img: "imagenes/bebida_seguro.png", type: "safe" },
+        { img: "imagenes/bebida_inseguro.png", type: "unsafe" }
+    ];
+
+    let currentItemIndex = 0;
+    let score = 0;
+    let timeLeft = 30;
+    let gameActive = true;
+
+    const timerElement = document.getElementById("timer");
+    const scoreElement = document.getElementById("score");
+    const currentImg = document.getElementById("current-img");
+    const modal = document.getElementById("modal-overlay");
+
+    function shuffle(array) { return array.sort(() => 0.5 - Math.random()); }
+    let shuffledItems = shuffle([...items]);
+
+    function loadNextItem() {
+        if (currentItemIndex >= shuffledItems.length) {
+            shuffledItems = shuffle([...items]);
+            currentItemIndex = 0;
+        }
+        currentImg.src = shuffledItems[currentItemIndex].img;
+    }
+
+    // Lógica de Arrastrar y Soltar
+    function allowDrop(event) { event.preventDefault(); }
+    function drag(event) { if(!gameActive) return; }
+
+    function drop(event, zone) {
+        event.preventDefault();
+        if (!gameActive) return;
+
+        const correctType = shuffledItems[currentItemIndex].type;
+        const zoneElement = zone === 'safe' ? document.getElementById("safe-zone") : document.getElementById("unsafe-zone");
+
+        if (zone === correctType) {
+            score++;
+            scoreElement.textContent = score;
+            zoneElement.classList.add("correct");
+        } else {
+            zoneElement.classList.add("incorrect");
+        }
+
+        setTimeout(() => {
+            zoneElement.classList.remove("correct", "incorrect");
+            currentItemIndex++;
+            loadNextItem();
+        }, 300);
+    }
+
+    // Cronómetro
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            endGame();
+        }
+    }, 1000);
+
+    function endGame() {
+        gameActive = false;
+        document.getElementById("modal-msg").textContent = "Lograste clasificar " + score + " situaciones correctamente.";
+        modal.style.display = "flex";
+    }
+
+    // Soporte para Clic (mejor para celulares que el Drag & Drop)
+    document.getElementById("safe-zone").onclick = () => drop(event, 'safe');
+    document.getElementById("unsafe-zone").onclick = () => drop(event, 'unsafe');
+
+    loadNextItem();
+</script>
+</body>
+</html>
